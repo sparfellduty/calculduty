@@ -122,6 +122,10 @@ input:focus-visible,select:focus-visible,summary:focus-visible,button:focus-visi
 .pk-foot button{font:inherit;font-size:13px;font-weight:500;border:1px solid var(--line);background:var(--surface2);color:var(--fg);padding:7px 14px;border-radius:6px;cursor:pointer}
 .pk-foot button.ok{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .check{display:flex;gap:10px;align-items:flex-start;font-size:14px}
+.redbox{margin-top:12px;padding:10px 12px;border:1px dashed var(--line);border-radius:10px;display:flex;flex-direction:column;gap:8px}
+.redbox.on{border:1px solid var(--warn);background:var(--warn-bg)}
+.redbox.off{opacity:.75}
+.redbox .hint{margin:0}
 .check input{margin-top:3px;accent-color:var(--accent)}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
 .seg label{position:relative;flex:1 1 auto}
@@ -400,7 +404,7 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;f
     <section class="results" id="res" aria-live="polite"></section>
   </div>
 
-  <p class="foot"><strong>Version 40 · 13.10.2026.</strong> Outil personnel d'aide à la planification, non officiel : il n'est ni produit ni validé par Sparfell. OE : OM-A Sparfell, chapitre 7 (pages 7-1 à 7-19, annexe I incluse). 9H : OM-A Sparfell Malta, chapitre 7 (rév. 10 pour les tableaux). LX : OM-A Sparfell Luxembourg, chapitre 7 (rév. 1 du 05.05.2026). T7 : OM-A Sparfell Luftfahrt S.r.l., chapitre 7 (rév. 2 du 28.11.2025). Il ne remplace ni l'OM-A à jour, ni le système de planification de l'opérateur, ni l'avis du NPFO.</p>
+  <p class="foot"><strong>Version 41 · 22.10.2026.</strong> Outil personnel d'aide à la planification, non officiel : il n'est ni produit ni validé par Sparfell. OE : OM-A Sparfell, chapitre 7 (pages 7-1 à 7-19, annexe I incluse). 9H : OM-A Sparfell Malta, chapitre 7 (rév. 10 pour les tableaux). LX : OM-A Sparfell Luxembourg, chapitre 7 (rév. 1 du 05.05.2026). T7 : OM-A Sparfell Luftfahrt S.r.l., chapitre 7 (rév. 2 du 28.11.2025). Il ne remplace ni l'OM-A à jour, ni le système de planification de l'opérateur, ni l'avis du NPFO.</p>
   <p class="foot" style="margin-top:-18px">Créé par Romain Soubervie, avec l'aide de Claude, pour Sparfell.</p>
 </main>
 
@@ -797,9 +801,24 @@ function computeOE(s,p){
   var reduced=null;
   if(isL&&cat){if(rest>630){var rl=Math.max(630,rest-120);reduced={min:rl,delta:rest-rl};}}
   else if(cat&&rest>600){var rm=Math.max(600,rest-120);reduced={min:rm,delta:rest-rm};}
-  else if(!cat&&strict){var fl=Math.max(dutyMin,540);if(rest>fl){var r9=Math.max(fl,rest-120);reduced={min:r9,delta:rest-r9};}}
+  else if(!cat&&strict){var fl=Math.max(dutyMin,540);if(rest>fl){var r9=Math.max(fl,rest-120);reduced={min:r9,delta:rest-r9,min1:Math.max(fl,rest-60)};}}
   else if(!cat&&rest>540){var rn=Math.max(540,rest-120);reduced={min:rn,delta:rest-rn};}
-  var next=dutyEnd+rest*60000;
+  /* Repos réduit choisi par l'utilisateur (case sous le déroulé) */
+  var two=strict&&!cat&&!!reduced&&reduced.min1!==reduced.min,unf=s.redLvl==='unf',restUsed=rest;
+  if(s.redOn&&reduced)restUsed=two&&!unf?reduced.min1:reduced.min;
+  var cut=rest-restUsed,refR='OM-A '+R.reduced;
+  V.red={possible:!!reduced,on:cut>0,two:two&&!!reduced,unf:unf,art:R.reduced,rest:fm(rest),used:fm(restUsed)};
+  if(!reduced){
+    V.red.txt='Pas possible pour ce duty : '+(cat?(isL?'le repos requis ('+fm(rest)+') n\'est pas au-dessus du plancher de 10:30.':'un repos requis de 10 h ou moins ('+fm(rest)+') ne se réduit jamais.'):(strict?'le repos requis ('+fm(rest)+') est déjà au plancher (durée du duty ou 9 h).':'le repos requis ('+fm(rest)+') est déjà au plancher de 9 h.'))+' ('+refR+')';
+  }else{
+    var lim=strict&&!cat?'1 h au plus, 2 h en circonstances imprévues, jamais sous la durée du duty ('+fm(dutyMin)+') ni 9 h':isL&&cat?'2 h au plus, jamais sous 10:30':cat?'2 h au plus, un repos de 10 h ou moins ne se réduit jamais':'2 h au plus, jamais sous 9 h';
+    var cond=isL&&cat?'Circonstances imprévues seulement, à la discrétion du commandant, et si le repos précédent n\'a pas été réduit.':cat?'Circonstances particulières seulement.':two?'':'';
+    var dd=cut>0?cut:(two&&!unf?rest-reduced.min1:reduced.delta);
+    var comp=isL&&cat?'Repos suivant allongé de '+fm(dd)+' et non réductible.':is9&&cat?'Repos suivant allongé du double, soit '+fm(2*dd)+'. 2 réductions au plus sur 7 jours.':cat?'':'Repos suivant allongé de '+fm(dd)+'. 2 réductions au plus sur 7 jours.';
+    V.red.txt=(cut>0?'Appliqué : repos de '+fm(restUsed)+' au lieu de '+fm(rest)+'.':'Possible : jusqu\'à '+(two?fm(reduced.min1)+' (prévu) ou '+fm(reduced.min)+' (imprévu)':fm(reduced.min))+' au lieu de '+fm(rest)+'.')+' '+[lim.charAt(0).toUpperCase()+lim.slice(1)+'.',cond,comp].filter(Boolean).join(' ')+' ('+refR+')';
+  }
+  if(cut>0)step(refR,'Repos réduit appliqué'+(two?(unf?' (circonstances imprévues, 2 h au plus)':' (1 h au plus)'):'')+' : '+fm(restUsed)+' au lieu de '+fm(rest)+'.');
+  var next=dutyEnd+restUsed*60000;
   var wk=null;
   if(s.wk){
     var wkEnd=parseLocal(s.wk),deadline=wkEnd+168*3600000;
@@ -844,7 +863,7 @@ function computeOE(s,p){
     {k:'Exploitation',v:cat?'Commercial':'NCC',s:'OM-A '+sec},
     {k:'Duty period',v:fm(dutyMin),s:'FDP '+fm(plan)+' + check-out '+post+' min'+(pos?' + positioning '+pos+' min':'')+(standby?' + standby '+fm(standby):'')},
     {k:'Empiètement WOCL',v:enc>0?fm(enc):'aucun',s:'WOCL '+woclZ(woclOff)+', '+offLabel(woclOff)},
-    {k:'Repos minimum',v:fm(rest),s:away?'hors base':'à la base',raw:restNote}
+    {k:cut>0?'Repos réduit':'Repos minimum',v:fm(restUsed),s:(cut>0?'au lieu de '+fm(rest)+', ':'')+(away?'hors base':'à la base'),raw:restNote}
   ];
   if(wk){
     V.facts.push({k:'Prochain repos hebdomadaire',v:'avant '+fz(wk.deadline),s:'limite de 168 h'});
@@ -853,7 +872,7 @@ function computeOE(s,p){
   V.timeline=[
     {k:posB>0?'Report pour le positioning':'Check-in',t:zt(startUTC),d:zd(startUTC),sub:'= '+fm(startM)+' LT ('+offLabel(s.rep)+'), valeur lue dans la table OM-A',gap:posB>0?'positioning '+fm(posB)+' (dans le FDP, pas un secteur)':'FDP '+fm(plan)},
     {k:'Block on, fin de FDP',t:zt(startUTC+plan*60000),d:zd(startUTC+plan*60000),gap:'check-out '+post+' min'+(pos?' + positioning '+pos+' min':'')},
-    {k:'Fin de duty',t:zt(dutyEnd),d:zd(dutyEnd),sub:'duty period de '+fm(dutyMin),gap:'repos minimum '+fm(rest)+(away?' hors base':' à la base')},
+    {k:'Fin de duty',t:zt(dutyEnd),d:zd(dutyEnd),sub:'duty period de '+fm(dutyMin),gap:(cut>0?'repos réduit '+fm(restUsed)+' (au lieu de '+fm(rest)+')':'repos minimum '+fm(rest))+(away?' hors base':' à la base')},
     {k:'Prochain report au plus tôt',t:zt(next),d:zd(next),sub:'check-in',gap:'+ '+(p.pre==null?60:p.pre)+' min de check-in'},
     {k:'Premier block off possible',t:zt(next+(p.pre==null?60:p.pre)*60000),d:zd(next+(p.pre==null?60:p.pre)*60000),sub:'premier décollage'}
   ];
@@ -990,6 +1009,7 @@ function readP(){
   return {pre:num('p_pre'),home:num('p_home'),away:num('p_away'),tz:num('p_tz'),post:num('p_post'),frmUnknown:$('p_frm').checked,reduced:$('p_red').checked};
 }
 function hhmm(id){var t=$(id).value;return t?(+t.split(':')[0])*60+(+t.split(':')[1]):0;}
+var RED={on:false,lvl:'plan'};
 function readS(){
   var off=$('i_off').value||new Date().toISOString().slice(0,10)+'T05:30',pre=readP().pre;
   var om=/^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d)$/.exec(off);
@@ -1006,7 +1026,7 @@ function readS(){
     start:start,sectors:Math.max(1,Math.floor(num('i_sec'))||1),
     fdp:fdp,
     mode:val('mode'),extRest:$('i_extrest').value,used:+$('i_used').value,
-    splitNight:$('i_splitnight').checked,splitDur:(((hhmm('i_sboff')-hhmm('i_sbon'))%1440)+1440)%1440,secAfter:Math.max(0,Math.floor(num('i_secafter'))||0),splitSuit:$('i_splitsuit').checked,
+    splitNight:$('i_splitnight').checked,redOn:RED.on,redLvl:RED.lvl,splitDur:(((hhmm('i_sboff')-hhmm('i_sbon'))%1440)+1440)%1440,secAfter:Math.max(0,Math.floor(num('i_secafter'))||0),splitSuit:$('i_splitsuit').checked,
     ifrType:$('i_ifrtype').value,ifrRest:num('i_ifrrest'),pilots:3,
     aug:1,cls:+$('i_cls').value,long:$('i_long').checked,
     posAfter:hhmm('i_posafter'),posBefore:posB,posDep:$('i_posdep').value.trim(),standby:hhmm('i_standby'),retTz:$('i_rettz').checked,
@@ -1057,7 +1077,12 @@ function render(){
   h+='<div class="panel"><p class="ttl">Déroulé du duty, en Z</p><ol class="tl">'+V.timeline.map(function(n,i){
     var last=i===V.timeline.length-1;
     return `<li class="node${i===0?' first':''}${last?' last':''}"><span class="time">${n.t}</span><span class="what"><b>${n.k}</b><small>${n.d}${n.sub?' · '+n.sub:''}</small></span></li>`+(n.gap?`<li class="gap">${n.gap}</li>`:'');
-  }).join('')+'</ol></div>';
+  }).join('')+'</ol>';
+  if(V.red){var R2=V.red;
+    h+='<div class="redbox'+(R2.on?' on':'')+(R2.possible?'':' off')+'"><label class="check"><input type="checkbox" id="i_redrest"'+(R2.on?' checked':'')+(R2.possible?'':' disabled')+'><span><b>Repos réduit</b></span></label>'+
+      (R2.two&&RED.on?'<div class="seg"><label><input type="radio" name="redlvl" value="plan"'+(R2.unf?'':' checked')+'><span>Prévu (−1 h)</span></label><label><input type="radio" name="redlvl" value="unf"'+(R2.unf?' checked':'')+'><span>Imprévu (−2 h)</span></label></div>':'')+
+      '<p class="hint">'+R2.txt+'</p></div>';}
+  h+='</div>';
   h+='<div class="panel"><dl class="facts">'+V.facts.map(function(f){return `<div><dt>${f.k}</dt><dd>${f.v}${f.raw||''}${f.s?`<small>${f.s}</small>`:''}</dd></div>`;}).join('')+'</dl></div>';
   if(V.alerts.length)h+='<div class="panel"><ul class="alerts">'+V.alerts.map(function(a){return `<li class="${a.l}">${a.t}</li>`;}).join('')+'</ul></div>';
   var selKey=V.mode==='base'&&oma(s.aoc)?(V.raw.tableMax<=V.raw.ruleMax?'base':'rule'):V.mode;
@@ -1072,6 +1097,8 @@ function render(){
   var keep={};
   $('res').querySelectorAll('details').forEach(function(d,i){keep[i]=d.open;});
   $('res').innerHTML=h;
+  var rb=$('i_redrest');if(rb)rb.addEventListener('change',function(){RED.on=rb.checked;render();});
+  $('res').querySelectorAll('input[name=redlvl]').forEach(function(r){r.addEventListener('change',function(){RED.lvl=r.value;render();});});
   $('res').querySelectorAll('details').forEach(function(d,i){if(keep[i])d.open=true;});
 }
 function onProfile(){
@@ -1275,6 +1302,7 @@ document.querySelectorAll('.resetAll').forEach(function(b){b.addEventListener('c
     o.el.dispatchEvent(new Event('pk-refresh'));
   });
   if(window.__pkClose)window.__pkClose();
+  RED.on=false;RED.lvl='plan';
   autoTz();render();
 });});
 $('f').addEventListener('input',autoTz);
