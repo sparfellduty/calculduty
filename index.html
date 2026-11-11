@@ -323,6 +323,15 @@ ol.fev li.last .ft{color:var(--hl)}
 ol.fev b{font-size:13px;font-weight:600}
 ol.fev small{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
 @media (max-width:520px){ol.fev{grid-template-columns:repeat(2,minmax(0,1fr))}.fs{padding:0 5px}.fs strong{font-size:12px}.fs em{font-size:9px}}
+
+/* v45 : compteur de secteurs − / + */
+.stepper{display:flex;align-items:center;gap:8px;max-width:200px}
+.stepper input{text-align:center;font:600 20px var(--ff-num);font-feature-settings:"tnum" 1;-moz-appearance:textfield;appearance:textfield;padding:8px 4px}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.stp{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--pill-bd);background:var(--surface2);color:var(--fg);font:500 22px var(--ff-num);line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.stp:hover{border-color:var(--pill-on-bd);color:var(--pill-on-fg)}
+.stp:active{background:var(--pill-on-bg)}
+.stp:disabled{opacity:.4;cursor:default}
 </style>
 </head>
 <body>
@@ -396,7 +405,7 @@ ol.fev small{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
         <div class="row">
           <div class="field wide"><span class="lbl">Départ du 1er vol, block off (Z)</span><div class="pk" data-pk="i_off" data-kind="datetime" data-label="Départ du 1er vol"></div><input type="hidden" id="i_off" value="2026-10-09T05:30"><div class="inl"><span class="lbl">Check-in avant</span><div class="seg sm" role="radiogroup"><label><input type="radio" name="ci" value="30"><span>30 min</span></label><label><input type="radio" name="ci" value="60" checked><span>60 min</span></label></div><input type="hidden" id="p_preOE" value="60"></div></div>
           <div class="field wide"><span class="lbl">Arrivée du dernier vol, block on (Z)</span><div class="pk" data-pk="i_end" data-kind="datetime" data-label="Arrivée du dernier vol"></div><input type="hidden" id="i_end" value="2026-10-09T15:00"><div class="inl"><span class="lbl">Check-out après</span><div class="seg sm" role="radiogroup"><label><input type="radio" name="co" value="15"><span>15 min</span></label><label><input type="radio" name="co" value="30" checked><span>30 min</span></label><label><input type="radio" name="co" value="45"><span>45 min</span></label><label><input type="radio" name="co" value="60"><span>60 min</span></label></div><input type="hidden" id="p_postOE" value="30"></div></div>
-          <div class="field"><label for="i_sec">Secteurs (atterrissages)</label><input id="i_sec" type="number" min="1" step="1" value="3"></div>
+          <div class="field"><label for="i_sec">Secteurs (atterrissages)</label><div class="stepper"><button type="button" class="stp" data-d="-1" aria-label="Un secteur de moins">−</button><input id="i_sec" type="number" min="1" max="20" step="1" value="1" inputmode="numeric"><button type="button" class="stp" data-d="1" aria-label="Un secteur de plus">+</button></div></div>
         </div>
         <span class="hint" id="fdpHint"></span>
         <div class="field">
@@ -522,7 +531,7 @@ ol.fev small{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
     <section class="results" id="res" aria-live="polite"></section>
   </div>
 
-  <p class="foot"><strong>Version 44 · 11.11.2026.</strong> Outil personnel d'aide à la planification, non officiel : il n'est ni produit ni validé par Sparfell. OE : OM-A Sparfell, chapitre 7 (pages 7-1 à 7-19, annexe I incluse). 9H : OM-A Sparfell Malta, chapitre 7 (rév. 10 pour les tableaux). LX : OM-A Sparfell Luxembourg, chapitre 7 (rév. 1 du 05.05.2026). T7 : OM-A Sparfell Luftfahrt S.r.l., chapitre 7 (rév. 2 du 28.11.2025). Il ne remplace ni l'OM-A à jour, ni le système de planification de l'opérateur, ni l'avis du NPFO.</p>
+  <p class="foot"><strong>Version 45 · 11.11.2026.</strong> Outil personnel d'aide à la planification, non officiel : il n'est ni produit ni validé par Sparfell. OE : OM-A Sparfell, chapitre 7 (pages 7-1 à 7-19, annexe I incluse). 9H : OM-A Sparfell Malta, chapitre 7 (rév. 10 pour les tableaux). LX : OM-A Sparfell Luxembourg, chapitre 7 (rév. 1 du 05.05.2026). T7 : OM-A Sparfell Luftfahrt S.r.l., chapitre 7 (rév. 2 du 28.11.2025). Il ne remplace ni l'OM-A à jour, ni le système de planification de l'opérateur, ni l'avis du NPFO.</p>
   <p class="foot" style="margin-top:-18px">Créé par Romain Soubervie, avec l'aide de Claude, pour Sparfell.</p>
 </main>
 
@@ -1441,8 +1450,14 @@ document.querySelectorAll('.resetAll').forEach(function(b){b.addEventListener('c
   });
   if(window.__pkClose)window.__pkClose();
   RED.on=false;RED.lvl='plan';
-  autoTz();render();
+  syncStp();autoTz();render();
 });});
+/* Compteur de secteurs : boutons − et +, de 1 à 20. */
+function syncStp(){var v=Math.floor(num('i_sec'))||1;document.querySelectorAll('.stp').forEach(function(b){b.disabled=(+b.dataset.d<0&&v<=1)||(+b.dataset.d>0&&v>=20);});}
+document.querySelectorAll('.stp').forEach(function(b){b.addEventListener('click',function(){
+  var e=$('i_sec'),v=Math.floor(num('i_sec'))||1;v=Math.min(20,Math.max(1,v+(+b.dataset.d)));e.value=v;
+  e.dispatchEvent(new Event('input',{bubbles:true}));});});
+$('i_sec').addEventListener('input',syncStp);
 $('f').addEventListener('input',autoTz);
 $('f').addEventListener('input',render);
 $('f').addEventListener('change',autoTz);
@@ -1462,7 +1477,7 @@ document.querySelectorAll('.theme button').forEach(function(b){b.addEventListene
   try{localStorage.setItem('ftl-theme',b.dataset.t);}catch(e){}
   applyTheme(b.dataset.t);
 });});
-loadProfile();render();
+loadProfile();syncStp();render();
 })();
 </script>
 <script>
