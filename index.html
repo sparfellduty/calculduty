@@ -133,6 +133,11 @@ input:focus-visible,select:focus-visible,summary:focus-visible,button:focus-visi
 .seg span{display:block;text-align:center;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface2);font-size:13px;font-weight:500}
 .seg input:checked+span{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.inl{display:flex;align-items:center;gap:10px;margin-top:8px}
+.inl>.lbl{white-space:nowrap;min-width:108px;color:var(--muted);font-weight:500}
+.seg.sm{flex:1;flex-wrap:nowrap}
+.seg.sm span{padding:6px 4px;white-space:nowrap}
+@media (max-width:520px){.inl{flex-wrap:wrap;gap:6px}.inl>.lbl{flex-basis:100%;min-width:0}}
 [hidden]{display:none!important}
 html{scroll-padding-top:230px}
 .sub{border-left:2px solid var(--line);padding-left:12px;display:flex;flex-direction:column;gap:12px}
@@ -246,12 +251,11 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;f
           </div>
         </div>
         <div class="banner ok" id="profBanner"></div>
-        <details class="prof">
+        <details class="prof" id="profDet">
           <summary>Paramètres</summary>
           <div class="body">
             <div id="profOE">
-              <div class="field"><label for="p_preOE">Check-in avant le départ (min)</label><input id="p_preOE" type="number" step="5" min="0"><span class="hint">OM-A 7.1.6 : 60 min normalement, réductible à 30 min ou allongeable à la discrétion du commandant.</span></div>
-              <div class="field"><label for="p_postOE">Check-out après block on (min)</label><input id="p_postOE" type="number" step="5" min="0"><span class="hint">OM-A 7.1.7 : 30 min normalement, 15 min si aucun service post-vol hors sécurité, plus à la discrétion du commandant.</span></div>
+              <!-- check-in et check-out : déplacés dans la section Duty -->
             </div>
             <div id="profEASA">
               <div class="row">
@@ -276,8 +280,8 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;f
           <div class="field"><label for="i_dst">Aéroport d'arrivée (OACI ou IATA)</label><input id="i_dst" data-ac="1" type="text" maxlength="40" placeholder="OMDB, DXB ou Dubai" autocomplete="off" spellcheck="false"><span class="hint" id="i_dst_info"></span></div>
         </div>
         <div class="row">
-          <div class="field wide"><span class="lbl">Départ du 1er vol, block off (Z)</span><div class="pk" data-pk="i_off" data-kind="datetime" data-label="Départ du 1er vol"></div><input type="hidden" id="i_off" value="2026-10-09T05:30"></div>
-          <div class="field wide"><span class="lbl">Arrivée du dernier vol, block on (Z)</span><div class="pk" data-pk="i_end" data-kind="datetime" data-label="Arrivée du dernier vol"></div><input type="hidden" id="i_end" value="2026-10-09T15:00"></div>
+          <div class="field wide"><span class="lbl">Départ du 1er vol, block off (Z)</span><div class="pk" data-pk="i_off" data-kind="datetime" data-label="Départ du 1er vol"></div><input type="hidden" id="i_off" value="2026-10-09T05:30"><div class="inl"><span class="lbl">Check-in avant</span><div class="seg sm" role="radiogroup"><label><input type="radio" name="ci" value="30"><span>30 min</span></label><label><input type="radio" name="ci" value="60" checked><span>60 min</span></label></div><input type="hidden" id="p_preOE" value="60"></div></div>
+          <div class="field wide"><span class="lbl">Arrivée du dernier vol, block on (Z)</span><div class="pk" data-pk="i_end" data-kind="datetime" data-label="Arrivée du dernier vol"></div><input type="hidden" id="i_end" value="2026-10-09T15:00"><div class="inl"><span class="lbl">Check-out après</span><div class="seg sm" role="radiogroup"><label><input type="radio" name="co" value="15"><span>15 min</span></label><label><input type="radio" name="co" value="30" checked><span>30 min</span></label><label><input type="radio" name="co" value="45"><span>45 min</span></label><label><input type="radio" name="co" value="60"><span>60 min</span></label></div><input type="hidden" id="p_postOE" value="30"></div></div>
           <div class="field"><label for="i_sec">Secteurs (atterrissages)</label><input id="i_sec" type="number" min="1" step="1" value="3"></div>
         </div>
         <span class="hint" id="fdpHint"></span>
@@ -404,7 +408,7 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;f
     <section class="results" id="res" aria-live="polite"></section>
   </div>
 
-  <p class="foot"><strong>Version 41 · 22.10.2026.</strong> Outil personnel d'aide à la planification, non officiel : il n'est ni produit ni validé par Sparfell. OE : OM-A Sparfell, chapitre 7 (pages 7-1 à 7-19, annexe I incluse). 9H : OM-A Sparfell Malta, chapitre 7 (rév. 10 pour les tableaux). LX : OM-A Sparfell Luxembourg, chapitre 7 (rév. 1 du 05.05.2026). T7 : OM-A Sparfell Luftfahrt S.r.l., chapitre 7 (rév. 2 du 28.11.2025). Il ne remplace ni l'OM-A à jour, ni le système de planification de l'opérateur, ni l'avis du NPFO.</p>
+  <p class="foot"><strong>Version 42 · 11.11.2026.</strong> Outil personnel d'aide à la planification, non officiel : il n'est ni produit ni validé par Sparfell. OE : OM-A Sparfell, chapitre 7 (pages 7-1 à 7-19, annexe I incluse). 9H : OM-A Sparfell Malta, chapitre 7 (rév. 10 pour les tableaux). LX : OM-A Sparfell Luxembourg, chapitre 7 (rév. 1 du 05.05.2026). T7 : OM-A Sparfell Luftfahrt S.r.l., chapitre 7 (rév. 2 du 28.11.2025). Il ne remplace ni l'OM-A à jour, ni le système de planification de l'opérateur, ni l'avis du NPFO.</p>
   <p class="foot" style="margin-top:-18px">Créé par Romain Soubervie, avec l'aide de Claude, pour Sparfell.</p>
 </main>
 
@@ -990,10 +994,12 @@ function val(name){return document.querySelector('input[name='+name+']:checked')
 function num(id){var x=parseFloat($(id).value);return isNaN(x)?0:x;}
 function loadProfile(){
   var a=aoc(),p=profiles[a],isOE=oma(a);
-  $('profOE').hidden=!isOE;$('profEASA').hidden=isOE;
+  $('profOE').hidden=!isOE;$('profEASA').hidden=isOE;$('profDet').hidden=isOE;
   var b=$('profBanner');
   if(isOE){
     $('p_postOE').value=p.post;$('p_preOE').value=p.pre;
+    document.querySelectorAll('input[name=ci]').forEach(function(r){r.checked=+r.value===+p.pre;});
+    document.querySelectorAll('input[name=co]').forEach(function(r){r.checked=+r.value===+p.post;});
     b.className='banner ok';
     b.textContent=a==='OE'?'OM-A Sparfell, chapitre 7 (pages 7-1 à 7-19) intégré : partie commerciale et annexe I (NCC). Les tables et l\'acclimatation EASA ne s\'appliquent pas à OE.':a==='9H'?'OM-A Sparfell Malta (9H), chapitre 7 intégré : partie commerciale (7.1) et annexe I (NCC). Ces règles s\'appliquent à 9H, pas celles d\'OE.':a==='T7'?'OM-A Sparfell Luftfahrt S.r.l. (T7), chapitre 7 (rév. 2) intégré : partie commerciale (7.1) et annexe I (NCC). Ces règles s\'appliquent à T7 seulement.':'OM-A Sparfell Luxembourg (LX), chapitre 7 (rév. 1) intégré : partie commerciale (7.1) et annexe I (NCC). Ces règles s\'appliquent à LX seulement.';
   }else{
@@ -1106,6 +1112,7 @@ function onProfile(){
   Object.keys(n).forEach(function(k){p[k]=n[k];});save();loadProfile();render();
 }
 ['p_postOE','p_home','p_away','p_tz','p_post','p_frm','p_red'].forEach(function(id){$(id).addEventListener('input',onProfile);$(id).addEventListener('change',onProfile);});
+document.querySelectorAll('input[name=ci],input[name=co]').forEach(function(r){r.addEventListener('change',function(){$(r.name==='ci'?'p_preOE':'p_postOE').value=r.value;onProfile();});});
 $('p_reset').addEventListener('click',function(){profiles[aoc()]=Object.assign({},oma(aoc())?DEF_OE:DEF);save();loadProfile();render();});
 document.querySelectorAll('input[name=aoc]').forEach(function(r){r.addEventListener('change',function(){loadProfile();render();});});
 /* Sélecteurs date / heure 24 h : calendrier + roues (valeurs écrites dans les champs cachés). */
@@ -1251,6 +1258,8 @@ document.addEventListener('click',function(e){if(openPop&&!e.composedPath().some
 })();
 /* Quand la date du départ change, l'arrivée suit du même écart. */
 var prevOff=$('i_off').value;
+/* Une valeur posée par le programme (ouverture, remise à zéro) devient la nouvelle référence. */
+$('i_off').addEventListener('pk-refresh',function(){prevOff=$('i_off').value;});
 $('i_off').addEventListener('input',function(){
   var a=Date.parse(prevOff+':00Z'),b=Date.parse($('i_off').value+':00Z'),e=Date.parse($('i_end').value+':00Z');
   prevOff=$('i_off').value;
@@ -1289,7 +1298,7 @@ function autoTz(){
 /* Remise à zéro : toutes les saisies reviennent à leur valeur initiale (l'AOC et les paramètres de profil restent). */
 var initial=[];
 document.querySelectorAll('#f input').forEach(function(el){
-  if(el.name==='aoc'||/^p_/.test(el.id))return;
+  if(el.name==='aoc'||el.name==='ci'||el.name==='co'||/^p_/.test(el.id))return;
   initial.push({el:el,v:el.value,c:el.checked});
 });
 document.querySelectorAll('.resetAll').forEach(function(b){b.addEventListener('click',function(){
