@@ -531,7 +531,7 @@ ol.fev small{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
     <section class="results" id="res" aria-live="polite"></section>
   </div>
 
-  <p class="foot"><strong>Version 45 · 11.11.2026.</strong> Outil personnel d'aide à la planification, non officiel : il n'est ni produit ni validé par Sparfell. OE : OM-A Sparfell, chapitre 7 (pages 7-1 à 7-19, annexe I incluse). 9H : OM-A Sparfell Malta, chapitre 7 (rév. 10 pour les tableaux). LX : OM-A Sparfell Luxembourg, chapitre 7 (rév. 1 du 05.05.2026). T7 : OM-A Sparfell Luftfahrt S.r.l., chapitre 7 (rév. 2 du 28.11.2025). Il ne remplace ni l'OM-A à jour, ni le système de planification de l'opérateur, ni l'avis du NPFO.</p>
+  <p class="foot"><strong>Version 46 · 13.11.2026.</strong> Outil personnel d'aide à la planification, non officiel : il n'est ni produit ni validé par Sparfell. OE : OM-A Sparfell, chapitre 7 (pages 7-1 à 7-19, annexe I incluse). 9H : OM-A Sparfell Malta, chapitre 7 (rév. 10 pour les tableaux). LX : OM-A Sparfell Luxembourg, chapitre 7 (rév. 2 du 12.08.2026). T7 : OM-A Sparfell Luftfahrt S.r.l., chapitre 7 (rév. 2 du 28.11.2025). Il ne remplace ni l'OM-A à jour, ni le système de planification de l'opérateur, ni l'avis du NPFO.</p>
   <p class="foot" style="margin-top:-18px">Créé par Romain Soubervie, avec l'aide de Claude, pour Sparfell.</p>
 </main>
 
@@ -740,13 +740,14 @@ var NCCT9=band([['0600','1359',[840,810,780,750,720]],['1400','1459',[810,780,75
 var RC={table:'7.1.8',wocl:'7.1.4',ext:'7.1.8.1',split:'7.1.8.2',rest:'7.1.9',sleep:'7.1.9.2',tz:'7.1.9.3',weekly:'7.1.9.4',reduced:'7.1.9.5',ifr:'7.1.10',discr:'7.1.11',standby:'7.1.12.1',pos:'7.1.8.3'};
 var RN={table:'I/7.2.5',wocl:'I/7.2.1',ext:'I/7.2.6',split:'I/7.2.7',rest:'I/7.2.9',sleep:'I/7.2.9',tz:'I/7.2.9',weekly:'I/7.2.9',reduced:'I/7.2.10',ifr:'I/7.2.11',discr:'I/7.2.12',standby:'7.1.11',pos:'I/7.2.8'};
 var RC9=Object.assign({},RC,{tz:'7.1.9.5',weekly:'7.1.9.3',reduced:'7.1.9.4'});
+var RNL=Object.assign({},RN,{standby:'I/7.2.13 et 7.1.12.1'});
 var CATTL=band([['0700','1159',[840,795,750,705,660,615,570,540]],['1200','1359',[810,765,720,675,630,585,540,540]],['1400','1559',[780,735,690,645,600,555,540,540]],
   ['1600','1759',[750,705,660,615,570,540,540,540]],['1800','0359',[720,675,630,585,540,540,540,540]],['0400','0459',[750,705,660,615,570,540,540,540]],
   ['0500','0559',[780,735,690,645,600,555,540,540]],['0600','0659',[810,765,720,675,630,585,540,540]]]);
 var CFG={
   OE:{id:'OE',rc:RC,rn:RN,nccTab:NCCT,ruleCat:true,nccWocl:false,nccExt:false,splitAfter:2,d7:60,dutyYear:2000},
   '9H':{id:'9H',rc:RC9,rn:RN,nccTab:NCCT9,ruleCat:false,nccWocl:true,nccExt:true,splitAfter:1,d7:60,dutyYear:2000},
-  LX:{id:'LX',rc:RC9,rn:RN,catTab:CATTL,catCols:8,nccTab:NCCT,ruleCat:false,nccWocl:false,nccExt:false,splitAfter:null,d7:55,dutyYear:1800},
+  LX:{id:'LX',rc:RC9,rn:RNL,nccTab:NCCT,ruleCat:false,nccWocl:false,nccExt:false,splitAfter:null,d7:55,dutyYear:1800},
   T7:{id:'T7',lx:true,rc:RC9,rn:RN,catTab:CATTL,catCols:8,nccTab:NCCT,ruleCat:false,nccWocl:false,nccExt:false,splitAfter:null,d7:60,dutyYear:1800,d14:110,b12m:1000}
 };
 function computeOE(s,p){
@@ -785,7 +786,7 @@ function computeOE(s,p){
   }
   var basic=Math.min(tableMax,ruleMax),bind=tableMax<=ruleMax?'table':'règle';
   var standby=s.standby;
-  if(cat&&standby>360){basic-=standby-360;step('OM-A '+R.standby,'Airport standby de '+fm(standby)+' : FDP réduit de '+fm(standby-360)+' (au-delà de 6 h).');}
+  if((cat||K.id==='LX')&&standby>360){basic-=standby-360;step('OM-A '+R.standby,'Airport standby de '+fm(standby)+' : FDP réduit de '+fm(standby-360)+' (au-delà de 6 h).');}
   /* extension */
   var ext=null,extWhy='';
   var cap22=cat?705:765;
@@ -866,7 +867,7 @@ function computeOE(s,p){
   var ifr=null,ifrWhy='',ifrNeed=0;
   if(s.sectors>3)ifrWhy='Limité à 3 secteurs.';
   else if(strict){
-    var bb=cat?(isL?K.catTab[0].v[ix]:780-sectorRed):(isL?960:840)-(isL?sectorRed:sectorRed);
+    var bb=cat?(isL?(K.catTab||CATT)[0].v[ix]:780-sectorRed):(isL?960:840)-(isL?sectorRed:sectorRed);
     if(cat)ifr=s.pilots==4?Math.min(bb+240,1080):Math.min(bb+120,960);
     else ifr=s.pilots==4?Math.min(bb+240,1140):Math.min(bb+180,1020);
   }
@@ -900,7 +901,7 @@ function computeOE(s,p){
     al('info','Airport standby de '+fm(standby)+' compté dans le duty period pour le repos minimum.');
     if(standby>720)al('bad','Airport standby de plus de 12 h.');
   }
-  if(!cat&&standby>0)al('warn','Le standby n\'est traité que dans la partie commerciale de l\'OM-A.');
+  if(!cat&&standby>0&&K.id!=='LX')al('warn','Le standby n\'est traité que dans la partie commerciale de l\'OM-A.');
   if(cat&&dBase>3)al('info','Report à plus de 3 fuseaux de la base : l\'OM-A ne définit pas de tables d\'acclimatation, seul le fuseau du WOCL change.');
   if(s.sectors>=6&&cat)al('info','À partir de 6 secteurs la réduction de secteurs est plafonnée à 2 h.');
   if(rest<=540)al('warn','Repos minimum de '+fm(rest)+' : l\'OM-A ('+R.sleep+') impose une sleep opportunity de 8 h, trajets et check-out compris. Compte le transport de l\'équipage vers l\'hôtel et le retour : si le trajet est long, le repos doit être prolongé.');
@@ -1124,7 +1125,7 @@ function loadProfile(){
     document.querySelectorAll('input[name=ci]').forEach(function(r){r.checked=+r.value===+p.pre;});
     document.querySelectorAll('input[name=co]').forEach(function(r){r.checked=+r.value===+p.post;});
     b.className='banner ok';
-    b.textContent=a==='OE'?'OM-A Sparfell, chapitre 7 (pages 7-1 à 7-19) intégré : partie commerciale et annexe I (NCC). Les tables et l\'acclimatation EASA ne s\'appliquent pas à OE.':a==='9H'?'OM-A Sparfell Malta (9H), chapitre 7 intégré : partie commerciale (7.1) et annexe I (NCC). Ces règles s\'appliquent à 9H, pas celles d\'OE.':a==='T7'?'OM-A Sparfell Luftfahrt S.r.l. (T7), chapitre 7 (rév. 2) intégré : partie commerciale (7.1) et annexe I (NCC). Ces règles s\'appliquent à T7 seulement.':'OM-A Sparfell Luxembourg (LX), chapitre 7 (rév. 1) intégré : partie commerciale (7.1) et annexe I (NCC). Ces règles s\'appliquent à LX seulement.';
+    b.textContent=a==='OE'?'OM-A Sparfell, chapitre 7 (pages 7-1 à 7-19) intégré : partie commerciale et annexe I (NCC). Les tables et l\'acclimatation EASA ne s\'appliquent pas à OE.':a==='9H'?'OM-A Sparfell Malta (9H), chapitre 7 intégré : partie commerciale (7.1) et annexe I (NCC). Ces règles s\'appliquent à 9H, pas celles d\'OE.':a==='T7'?'OM-A Sparfell Luftfahrt S.r.l. (T7), chapitre 7 (rév. 2) intégré : partie commerciale (7.1) et annexe I (NCC). Ces règles s\'appliquent à T7 seulement.':'OM-A Sparfell Luxembourg (LX), chapitre 7 (rév. 2) intégré : partie commerciale (7.1) et annexe I (NCC). Ces règles s\'appliquent à LX seulement.';
   }else{
     $('p_pre').value=p.pre;$('p_home').value=p.home;$('p_away').value=p.away;$('p_tz').value=p.tz;$('p_post').value=p.post;
     $('p_frm').checked=p.frmUnknown;$('p_red').checked=p.reduced;
